@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calculadora de guardias</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 10px;
+    background: #f4f4f4;
+    color: #222;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  body.dark {
+    background: #121212;
+    color: #eee;
+  }
+  .card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    transition: background-color 0.3s, color 0.3s;
+  }
+  body.dark .card {
+    background: #222;
+    color: #ddd;
+    box-shadow: 0 0 10px rgba(255,255,255,0.1);
+  }
+  label {
+    display: block;
+    margin: 5px 0;
+  }
+  select, input[type=date], button {
+    padding: 7px;
+    width: 100%;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  body.dark select, body.dark input[type=date] {
+    background: #333;
+    color: #eee;
+    border-color: #555;
+  }
+  button {
+    background: #1976d2;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  button:hover {
+    background: #1565c0;
+  }
+  /* Calendario */
+  #calendarioMes {
+    max-width: 700px;
+    margin: 0 auto 20px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th {
+    background: #1976d2;
+    color: white;
+    padding: 8px;
+  }
+  body.dark th {
+    background: #1565c0;
+  }
+  td {
+    border: 1px solid #ccc;
+    height: 80px;
+    vertical-align: top;
+    padding: 5px;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  body.dark td {
+    border-color: #555;
+  }
+  td.inactive {
+    background: #eee;
+    color: #999;
+    cursor: default;
+  }
+  body.dark td.inactive {
+    background: #2a2a2a;
+    color: #666;
+  }
+  td.day {
+    background: #d7f3d7;
+  }
+  body.dark td.day {
+    background: #336633;
+  }
+  td.night {
+    background: #d7e4f9;
+  }
+  body.dark td.night {
+    background: #335583;
+  }
+  td.full {
+    background: #ecd7f9;
+  }
+  body.dark td.full {
+    background: #553366;
+  }
+  td.past {
+    opacity: 0.5;
+  }
+  /* Tooltip para detalles */
+  .tooltip {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #aaa;
+    padding: 5px;
+    border-radius: 4px;
+    top: 20px;
+    left: 5px;
+    z-index: 10;
+    width: 160px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    font-size: 0.9em;
+  }
+  body.dark .tooltip {
+    background: #333;
+    border-color: #555;
+    color: #ddd;
+  }
+  td:hover .tooltip {
+    display: block;
+  }
+  /* Leyenda */
+  #leyenda {
+    max-width: 700px;
+    margin: 0 auto 20px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  .leyendaItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .colorBox {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+  }
+  .dayBox { background: #d7f3d7; }
+  body.dark .dayBox { background: #336633; }
+  .nightBox { background: #d7e4f9; }
+  body.dark .nightBox { background: #335583; }
+  .fullBox { background: #ecd7f9; }
+  body.dark .fullBox { background: #553366; }
+  /* Navegación meses */
+  #navMeses {
+    max-width: 700px;
+    margin: 0 auto 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+  #navMeses button {
+    width: 120px;
+  }
+  /* Resumen historial */
+  #resumenHistorial {
+    max-width: 700px;
+    margin: 0 auto 20px;
+    background: #f9f9f9;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.1);
+  }
+  body.dark #resumenHistorial {
+    background: #222;
+    box-shadow: 0 0 6px rgba(255,255,255,0.1);
+    color: #ddd;
+  }
+</style>
+</head>
+<body>
+
+<h1>Calculadora de guardias</h1>
+
+<div class="card">
+  <label>
+    Fecha de inicio:
+    <input type="date" id="fechaInicio" />
+  </label>
+
+  <label>
+    Turno de inicio:
+    <select id="turnoInicio">
+      <option value="Día">Día (07:00)</option>
+      <option value="Noche">Noche (21:00)</option>
+    </select>
+  </label>
+
+  <label>
+    Tipo de guardia:
+    <select id="tipoGuardia">
+      <option value="12h">Rotativa 12h (14h Día / 10h Noche)</option>
+      <option value="24h">24h con 72h franco</option>
+    </select>
+  </label>
+
+  <button onclick="generar()">Generar calendario</button>
+</div>
+
+<!-- Botón modo oscuro -->
+<div class="card" style="max-width:700px; margin: 0 auto 20px;">
+  <button id="btnModoOscuro" onclick="toggleModoOscuro()">Modo Oscuro / Claro</button>
+</div>
+
+<!-- Navegación entre meses -->
+<div id="navMeses" class="card" style="display:none;">
+  <button onclick="cambiarMes(-1)">← Mes anterior</button>
+  <div id="mesActual" style="font-weight:bold; font-size:1.1em;"></div>
+  <button onclick="cambiarMes(1)">Mes siguiente →</button>
+</div>
+
+<div id="calendarioMes" class="card"></div>
+
+<div id="resumenHistorial" style="display:none;">
+  <h2>Resumen de guardias del mes</h2>
+  <div id="resumenContenido"></div>
+</div>
+
+<div id="leyenda" class="card">
+  <div class="leyendaItem"><div class="colorBox dayBox"></div>Turno Día</div>
+  <div class="leyendaItem"><div class="colorBox nightBox"></div>Turno Noche</div>
+  <div class="leyendaItem"><div class="colorBox fullBox"></div>Guardia 24h</div>
+</div>
+
+<script>
+  let guardiasGlobal = [];
+  let fechaMostrada = null;
+
+  // Modo oscuro: cargar preferencia guardada
+  if(localStorage.getItem("modoOscuro") === "true") {
+    document.body.classList.add("dark");
+  }
+
+  function toggleModoOscuro() {
+    document.body.classList.toggle("dark");
+    localStorage.setItem("modoOscuro", document.body.classList.contains("dark"));
+  }
+
+  const tipoGuardiaSelect = document.getElementById("tipoGuardia");
+  const turnoInicioSelect = document.getElementById("turnoInicio");
+
+  // Deshabilitar turnoInicio según tipoGuardia
+  tipoGuardiaSelect.addEventListener("change", () => {
+    if (tipoGuardiaSelect.value === "24h") {
+      turnoInicioSelect.disabled = true;
+    } else {
+      turnoInicioSelect.disabled = false;
+    }
+  });
+
+  function generarGuardias(fechaInicioStr, turnoInicio, tipo) {
+    let fechaInicio;
+    if (tipo === "12h") {
+      fechaInicio = turnoInicio === "Día" 
+        ? new Date(fechaInicioStr + "T07:00:00")
+        : new Date(fechaInicioStr + "T21:00:00");
+    } else {
+      fechaInicio = new Date(fechaInicioStr + "T07:00:00");
+    }
+
+    let lista = [];
+    let fecha = new Date(fechaInicio);
+
+    if (tipo === "12h") {
+      let secuencia = turnoInicio === "Día"
+        ? [
+            { nombre: "Día", duracionGuardia: 14, franco: 12, clase: "day" },
+            { nombre: "Noche", duracionGuardia: 10, franco: 48, clase: "night" }
+          ]
+        : [
+            { nombre: "Noche", duracionGuardia: 10, franco: 48, clase: "night" },
+            { nombre: "Día", duracionGuardia: 14, franco: 12, clase: "day" }
+          ];
+
+      let idx = 0;
+      for (let n = 0; n < 60; n++) {
+        let turno = secuencia[idx];
+        let inicio = new Date(fecha);
+        let fin = new Date(fecha.getTime() + turno.duracionGuardia * 3600000);
+        lista.push({ inicio, fin, tipo: turno.nombre, clase: turno.clase });
+        fecha = new Date(fin.getTime() + turno.franco * 3600000);
+
+        idx = (idx + 1) % secuencia.length;
+        if (secuencia[idx].nombre === "Día") fecha.setHours(7,0,0,0);
+        else fecha.setHours(21,0,0,0);
+      }
+    } else {
+      for (let n = 0; n < 60; n++) {
+        let inicio = new Date(fecha);
+        let fin = new Date(fecha);
+        fin.setDate(fin.getDate() + 1);
+        fin.setHours(7,0,0,0);
+        lista.push({ inicio, fin, tipo: "Guardia Completa", clase: "full" });
+        fecha = new Date(fin.getTime() + 72 * 3600000);
+        fecha.setHours(7,0,0,0);
+      }
+    }
+
+    return lista;
+  }
+
+  function construirCalendario(fecha, guardias) {
+    const calendarioDiv = document.getElementById("calendarioMes");
+    calendarioDiv.innerHTML = "";
+
+    const year = fecha.getFullYear();
+    const month = fecha.getMonth();
+
+    const primerDiaMes = new Date(year, month, 1);
+    const ultimoDiaMes = new Date(year, month + 1, 0);
+    const diasMes = ultimoDiaMes.getDate();
+
+    const diasSemana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+    const table = document.createElement("table");
+
+    const thead = document.createElement("thead");
+    const trHead = document.createElement("tr");
+    diasSemana.forEach(dia => {
+      const th = document.createElement("th");
+      th.textContent = dia;
+      trHead.appendChild(th);
+    });
+    thead.appendChild(trHead);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+
+    let primerDiaSemana = primerDiaMes.getDay() - 1;
+    if (primerDiaSemana < 0) primerDiaSemana = 6;
+
+    let fila = document.createElement("tr");
+
+    for (let i = 0; i < primerDiaSemana; i++) {
+      const td = document.createElement("td");
+      td.classList.add("inactive");
+      fila.appendChild(td);
+    }
+
+    for (let dia = 1; dia <= diasMes; dia++) {
+      if (fila.children.length === 7) {
+        tbody.appendChild(fila);
+        fila = document.createElement("tr");
+      }
+
+      const td = document.createElement("td");
+      td.textContent = dia;
+
+      const fechaActual = new Date(year, month, dia);
+
+      const guardiasDelDia = guardias.filter(g => {
+        const inicio = g.inicio;
+        return (
+          inicio.getFullYear() === fechaActual.getFullYear() &&
+          inicio.getMonth() === fechaActual.getMonth() &&
+          inicio.getDate() === fechaActual.getDate()
+        );
+      });
+
+      if (guardiasDelDia.length > 0) {
+        td.classList.add(guardiasDelDia[0].clase);
+
+        const tooltip = document.createElement("div");
+        tooltip.classList.add("tooltip");
+        tooltip.innerHTML = guardiasDelDia
+          .map(g => `<strong>${g.tipo}</strong><br>${g.inicio.toLocaleString("es-AR", {dateStyle:"short", timeStyle:"short"})}`)
+          .join("<hr>");
+        td.appendChild(tooltip);
+      }
+
+      const hoy = new Date();
+      hoy.setHours(0,0,0,0);
+      if (fechaActual < hoy) {
+        td.classList.add("past");
+      }
+
+      fila.appendChild(td);
+    }
+
+    while (fila.children.length < 7) {
+      const td = document.createElement("td");
+      td.classList.add("inactive");
+      fila.appendChild(td);
+    }
+    tbody.appendChild(fila);
+
+    table.appendChild(tbody);
+    calendarioDiv.appendChild(table);
+
+    // Actualizar texto mes actual en navegación
+    const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+    document.getElementById("mesActual").textContent = meses[month] + " " + year;
+
+    // Mostrar resumen de guardias para el mes
+    mostrarResumenMes(guardias, year, month);
+
+    // Mostrar navegación meses
+    document.getElementById("navMeses").style.display = "flex";
+
+    fechaMostrada = new Date(year, month, 1);
+  }
+
+  function mostrarResumenMes(guardias, year, month) {
+    const resumenDiv = document.getElementById("resumenHistorial");
+    const contenidoDiv = document.getElementById("resumenContenido");
+
+    // Filtrar guardias que inician en el mes y año
+    const guardiasDelMes = guardias.filter(g => {
+      return g.inicio.getFullYear() === year && g.inicio.getMonth() === month;
+    });
+
+    if (guardiasDelMes.length === 0) {
+      resumenDiv.style.display = "none";
+      return;
+    }
+
+    resumenDiv.style.display = "block";
+
+    // Contar tipos y horas
+    const resumen = {};
+    guardiasDelMes.forEach(g => {
+      if (!resumen[g.tipo]) resumen[g.tipo] = { cantidad: 0, horas: 0 };
+      resumen[g.tipo].cantidad++;
+      resumen[g.tipo].horas += (g.fin - g.inicio) / 3600000;
+    });
+
+    // Crear contenido HTML
+    let html = "<ul>";
+    for (const tipo in resumen) {
+      html += `<li><strong>${tipo}:</strong> ${resumen[tipo].cantidad} guardias, ${resumen[tipo].horas.toFixed(1)} horas</li>`;
+    }
+    html += "</ul>";
+
+    contenidoDiv.innerHTML = html;
+  }
+
+  function generar() {
+    const fechaInicioStr = document.getElementById("fechaInicio").value;
+    const turnoInicio = document.getElementById("turnoInicio").value;
+    const tipo = document.getElementById("tipoGuardia").value;
+
+    if (!fechaInicioStr) {
+      alert("Selecciona una fecha de inicio");
+      return;
+    }
+
+    localStorage.setItem("fechaInicio", fechaInicioStr);
+    localStorage.setItem("turnoInicio", turnoInicio);
+    localStorage.setItem("tipoGuardia", tipo);
+
+    guardiasGlobal = generarGuardias(fechaInicioStr, turnoInicio, tipo);
+    construirCalendario(new Date(fechaInicioStr), guardiasGlobal);
+  }
+
+  function cambiarMes(cambio) {
+    if (!fechaMostrada) return;
+    fechaMostrada.setMonth(fechaMostrada.getMonth() + cambio);
+    construirCalendario(fechaMostrada, guardiasGlobal);
+  }
+
+  // Al cargar la página, restaurar última configuración si existe
+  window.onload = () => {
+    const f = localStorage.getItem("fechaInicio");
+    const t = localStorage.getItem("turnoInicio");
+    const g = localStorage.getItem("tipoGuardia");
+
+    if (f) document.getElementById("fechaInicio").value = f;
+    if (t) document.getElementById("turnoInicio").value = t;
+    if (g) document.getElementById("tipoGuardia").value = g;
+
+    // Aplicar la lógica de habilitar/deshabilitar turnoInicio según tipoGuardia
+    if (g === "24h") {
+      turnoInicioSelect.disabled = true;
+    } else {
+      turnoInicioSelect.disabled = false;
+    }
+
+    if (f && t && g) {
+      guardiasGlobal = generarGuardias(f, t, g);
+      construirCalendario(new Date(f), guardiasGlobal);
+    }
+  };
+</script>
+
+</body>
+</html>
